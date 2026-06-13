@@ -41,8 +41,8 @@
 
   function play(a){ try { a.currentTime = 0; a.play(); } catch(e){} }
   function buildUI(){
-    characters.forEach((c,i)=>{ const b=document.createElement('button'); b.className='character-card'; b.innerHTML=`<img src="${c.sprite}" alt="${c.name}"><strong>${c.name}</strong><span>${c.power} • Speed ${c.speed}</span>`; b.onclick=()=>start(c); grid.appendChild(b); });
-    stages.forEach((s,i)=>{ const r=document.createElement('div'); r.className='stage-row'; r.id='stage-'+i; r.innerHTML=`<span>${s.title}</span><strong>${s.boss}</strong>`; stageList.appendChild(r); });
+    characters.forEach((c,i)=>{ const b=document.createElement('button'); b.className='character-card'; const ci=document.createElement('img'); ci.src=c.sprite; ci.alt=c.name; const cn=document.createElement('strong'); cn.textContent=c.name; const cs=document.createElement('span'); cs.textContent=`${c.power} \u2022 Speed ${c.speed}`; b.appendChild(ci); b.appendChild(cn); b.appendChild(cs); b.onclick=()=>start(c); grid.appendChild(b); });
+    stages.forEach((s,i)=>{ const r=document.createElement('div'); r.className='stage-row'; r.id='stage-'+i; const rt=document.createElement('span'); rt.textContent=s.title; const rb=document.createElement('strong'); rb.textContent=s.boss; r.appendChild(rt); r.appendChild(rb); stageList.appendChild(r); });
   }
   function start(c){
     hero = c; player = { x:120,y:canvas.height-130,w:44,h:62,vx:0,vy:0,on:false,hp:c.hp,max:c.hp,ifr:0,cool:0,img:c.image };
