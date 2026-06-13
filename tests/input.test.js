@@ -186,4 +186,66 @@ describe('InputHandler', () => {
     );
     expect(input.buttons.jump).toBe(true);
   });
+
+  test('touchend re-evaluates remaining touches (multitouch fix)', () => {
+    const listeners = {};
+    const target = {
+      addEventListener: jest.fn((event, handler) => {
+        listeners[event] = handler;
+      }),
+      removeEventListener: jest.fn()
+    };
+    const dpadRect = { x: 0, y: 0, width: 100, height: 100 };
+    const attackRect = { x: 200, y: 0, width: 50, height: 50 };
+    const jumpRect = { x: 300, y: 0, width: 50, height: 50 };
+
+    input.bindTouch(target, dpadRect, attackRect, jumpRect);
+
+    // Simulate two fingers down: dpad-left (id=0) + jump (id=1)
+    listeners.touchstart({
+      changedTouches: [{ identifier: 0, clientX: 10, clientY: 50 }]
+    });
+    listeners.touchstart({
+      changedTouches: [{ identifier: 1, clientX: 320, clientY: 20 }]
+    });
+    expect(input.dpad.left).toBe(true);
+    expect(input.buttons.jump).toBe(true);
+
+    // Lift only the jump finger (id=1)
+    listeners.touchend({
+      changedTouches: [{ identifier: 1, clientX: 320, clientY: 20 }]
+    });
+
+    // dpad-left should still be active from the remaining touch
+    expect(input.dpad.left).toBe(true);
+    expect(input.buttons.jump).toBe(false);
+  });
+
+  test('touchend clears all inputs when last finger lifts', () => {
+    const listeners = {};
+    const target = {
+      addEventListener: jest.fn((event, handler) => {
+        listeners[event] = handler;
+      }),
+      removeEventListener: jest.fn()
+    };
+    const dpadRect = { x: 0, y: 0, width: 100, height: 100 };
+    const attackRect = { x: 200, y: 0, width: 50, height: 50 };
+    const jumpRect = { x: 300, y: 0, width: 50, height: 50 };
+
+    input.bindTouch(target, dpadRect, attackRect, jumpRect);
+
+    listeners.touchstart({
+      changedTouches: [{ identifier: 0, clientX: 10, clientY: 50 }]
+    });
+    expect(input.dpad.left).toBe(true);
+
+    listeners.touchend({
+      changedTouches: [{ identifier: 0, clientX: 10, clientY: 50 }]
+    });
+    expect(input.dpad.left).toBe(false);
+    expect(input.dpad.right).toBe(false);
+    expect(input.buttons.attack).toBe(false);
+    expect(input.buttons.jump).toBe(false);
+  });
 });

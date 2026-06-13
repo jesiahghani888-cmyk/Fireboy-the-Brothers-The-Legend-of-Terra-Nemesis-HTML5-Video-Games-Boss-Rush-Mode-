@@ -12,17 +12,37 @@
 </head>
 <body>
   <canvas id="gameCanvas" width="800" height="480"></canvas>
-  <script src="src/collision.js"></script>
-  <script src="src/input.js"></script>
-  <script src="src/projectiles.js"></script>
-  <script src="src/player.js"></script>
-  <script src="src/bosses.js"></script>
-  <script src="src/audio.js"></script>
-  <script src="src/ui.js"></script>
-  <script src="src/engine.js"></script>
   <script>
-    // Game bootstrap - modules are loaded via CommonJS for tests,
-    // browser entry point initializes the canvas game loop here.
+    // CommonJS shim: each script uses require()/module.exports for Jest tests.
+    // This shim lets the same files load in the browser without a bundler.
+    var _modules = {};
+    var module = { exports: {} };
+    function require(path) {
+      var key = path.replace(/^\.\//, '').replace(/^\.\.\/src\//, '').replace(/\.js$/, '');
+      return _modules[key] || {};
+    }
+    function _register(name) {
+      _modules[name] = module.exports;
+      module = { exports: {} };
+    }
+  </script>
+  <script src="src/collision.js"></script>
+  <script>_register('collision');</script>
+  <script src="src/input.js"></script>
+  <script>_register('input');</script>
+  <script src="src/projectiles.js"></script>
+  <script>_register('projectiles');</script>
+  <script src="src/player.js"></script>
+  <script>_register('player');</script>
+  <script src="src/bosses.js"></script>
+  <script>_register('bosses');</script>
+  <script src="src/audio.js"></script>
+  <script>_register('audio');</script>
+  <script src="src/ui.js"></script>
+  <script>_register('ui');</script>
+  <script src="src/engine.js"></script>
+  <script>_register('engine');</script>
+  <script>
     console.log('Fireboy The Brothers: Boss Rush Mode loaded');
   </script>
 </body>

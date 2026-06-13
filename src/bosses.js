@@ -122,12 +122,16 @@ class Boss {
     this.phaseTimer += dt;
     this._runPattern(dt, playerX, playerY);
     this.x += this.vx * dt;
-    this.y += this.vy * dt;
 
     if (this._usesGravity()) {
       if (!this.grounded) {
         this.vy += this.gravity * dt;
       }
+    }
+
+    this.y += this.vy * dt;
+
+    if (this._usesGravity()) {
       if (this.y + this.height >= this.platformY) {
         this.y = this.platformY - this.height;
         this.vy = 0;

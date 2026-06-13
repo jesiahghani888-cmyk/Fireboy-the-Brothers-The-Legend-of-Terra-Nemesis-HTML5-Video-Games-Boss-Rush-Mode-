@@ -38,6 +38,12 @@ class InputHandler {
         delete this.touches[touch.identifier];
       }
       this._resetTouchInputs();
+      for (const t of Object.values(this.touches)) {
+        this._updateFromTouch(
+          { clientX: t.x, clientY: t.y },
+          dpadRect, attackBtnRect, jumpBtnRect, true
+        );
+      }
     };
     const onTouchMove = (e) => {
       for (const touch of e.changedTouches) {
