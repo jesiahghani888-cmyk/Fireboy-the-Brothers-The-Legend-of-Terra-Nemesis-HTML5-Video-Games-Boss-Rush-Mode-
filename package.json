@@ -1,0 +1,19 @@
+{
+  "name": "fireboy-the-brothers-the-legend-of-terra-nemesis-html5-video-games-boss-rush-mode-",
+  "version": "1.0.0",
+  "description": "This Game is a Brand New HTML5 Video Games like for Fireboy The Brothers: The Legend of Terra Nemesis with Boss Rush Mode",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest --verbose --coverage",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Fireboy The Brothers: The Legend of Terra Nemesis - Boss Rush Mode</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    canvas { display: block; max-width: 100vw; max-height: 100vh; image-rendering: pixelated; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="480"></canvas>
+  <script src="src/collision.js"></script>
+  <script src="src/input.js"></script>
+  <script src="src/projectiles.js"></script>
+  <script src="src/player.js"></script>
+  <script src="src/bosses.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/ui.js"></script>
+  <script src="src/engine.js"></script>
+  <script>
+    // Game bootstrap - modules are loaded via CommonJS for tests,
+    // browser entry point initializes the canvas game loop here.
+    console.log('Fireboy The Brothers: Boss Rush Mode loaded');
+  </script>
+</body>
+</html>
