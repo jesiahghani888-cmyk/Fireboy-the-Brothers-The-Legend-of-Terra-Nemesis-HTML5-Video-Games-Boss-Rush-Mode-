@@ -1,17 +1,47 @@
 (() => {
-  const canvas = document.getElementById('gameCanvas');
+  function requireEl(id) {
+    const el = document.getElementById(id);
+    if (!el) throw new Error('Missing required element: #' + id);
+    return el;
+  }
+
+  const canvas = requireEl('gameCanvas');
   const ctx = canvas.getContext('2d');
-  const overlay = document.getElementById('characterOverlay');
-  const pauseOverlay = document.getElementById('pauseOverlay');
-  const grid = document.getElementById('characterGrid');
-  const stageList = document.getElementById('stageList');
+  if (!ctx) throw new Error('Unable to obtain 2D rendering context');
+
+  const overlay = requireEl('characterOverlay');
+  const pauseOverlay = requireEl('pauseOverlay');
+  const grid = requireEl('characterGrid');
+  const stageList = requireEl('stageList');
   const hud = {
-    player: document.getElementById('hudPlayer'), stage: document.getElementById('hudStage'),
-    boss: document.getElementById('hudBoss'), lives: document.getElementById('hudLives'), score: document.getElementById('hudScore')
+    player: requireEl('hudPlayer'), stage: requireEl('hudStage'),
+    boss: requireEl('hudBoss'), lives: requireEl('hudLives'), score: requireEl('hudScore')
   };
-  const img = name => { const i = new Image(); i.src = name; return i; };
+
+  let loadErrors = 0;
+
+  const img = name => {
+    const i = new Image();
+    i.onerror = () => {
+      loadErrors++;
+      console.error('Failed to load image: ' + name);
+    };
+    i.src = name;
+    return i;
+  };
+
   const assetUrl = name => name.split('/').map(encodeURIComponent).join('/');
-  const snd = name => { const a = new Audio(assetUrl(name)); a.preload = 'auto'; return a; };
+
+  const snd = name => {
+    const a = new Audio(assetUrl(name));
+    a.preload = 'auto';
+    a.addEventListener('error', () => {
+      loadErrors++;
+      console.error('Failed to load audio: ' + name);
+    });
+    return a;
+  };
+
   const assets = {
     bg: img('Background (Space).png'), fg: img('Foreground (Platform).png'), laser: img('BigCore_Laser.png'),
     hit: snd('HitBoss.wav'), shoot: snd('Player_FireShoot.wav'), jump: snd('Jump.wav'), hurt: snd('PlayerHurt.wav'),
@@ -39,14 +69,32 @@
   const keys = {}, touch = {x:0,y:0,shoot:false};
   let state = 'select', hero = null, player, boss, bullets = [], enemy = [], particles = [], stageIndex = 0, score = 0, shake = 0, last = 0, flash = 0;
 
-  function play(a){ try { a.currentTime = 0; a.play(); } catch(e){} }
+  function play(a) {
+    if (!a || typeof a.play !== 'function') {
+      console.warn('play() called with invalid audio object');
+      return;
+    }
+    try { a.currentTime = 0; } catch (e) {
+      console.warn('Could not reset audio position:', e.message);
+    }
+    a.play().catch(e => {
+      if (e.name !== 'NotAllowedError') {
+        console.error('Audio playback failed:', e.message);
+      }
+    });
+  }
+
   function buildUI(){
     characters.forEach((c,i)=>{ const b=document.createElement('button'); b.className='character-card'; b.innerHTML=`<img src="${c.sprite}" alt="${c.name}"><strong>${c.name}</strong><span>${c.power} • Speed ${c.speed}</span>`; b.onclick=()=>start(c); grid.appendChild(b); });
     stages.forEach((s,i)=>{ const r=document.createElement('div'); r.className='stage-row'; r.id='stage-'+i; r.innerHTML=`<span>${s.title}</span><strong>${s.boss}</strong>`; stageList.appendChild(r); });
   }
   function start(c){
     hero = c; player = { x:120,y:canvas.height-130,w:44,h:62,vx:0,vy:0,on:false,hp:c.hp,max:c.hp,ifr:0,cool:0,img:c.image };
-    stageIndex = 0; score = 0; bullets=[]; enemy=[]; particles=[]; overlay.classList.remove('active'); assets.music.play().catch(()=>{}); loadStage(); state='play';
+    stageIndex = 0; score = 0; bullets=[]; enemy=[]; particles=[]; overlay.classList.remove('active');
+    assets.music.play().catch(e => {
+      if (e.name !== 'NotAllowedError') console.error('Music playback failed:', e.message);
+    });
+    loadStage(); state='play';
   }
   function loadStage(){
     const s = stages[stageIndex]; boss = { x:canvas.width-230,y:115,w:130,h:100,hp:s.hp,max:s.hp,t:0,phase:0,img:s.image }; enemy=[]; bullets=[]; flash=90; play(assets.warn); play(s.audio); updateHud();
@@ -54,7 +102,7 @@
   function updateHud(){
     hud.player.textContent = hero ? hero.name : 'Select'; hud.stage.textContent = stages[stageIndex]?.title || '-'; hud.boss.textContent = stages[stageIndex]?.boss || '-';
     hud.lives.textContent = player ? Math.max(0, player.hp) : 3; hud.score.textContent = score;
-    stages.forEach((_,i)=>document.getElementById('stage-'+i).classList.toggle('active', i===stageIndex));
+    stages.forEach((_,i)=>{ const el = document.getElementById('stage-'+i); if (el) el.classList.toggle('active', i===stageIndex); });
   }
   function rect(a,b){ return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
   function addParticle(x,y,c,n=10){ for(let i=0;i<n;i++) particles.push({x,y,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:30+Math.random()*25,c}); }
@@ -97,8 +145,23 @@
     ctx.restore(); if(state==='win') title('Boss Rush Complete!','Roaring Metal has fallen. Terra Nemesis is saved. Refresh to play again.'); if(state==='over') title('Game Over','Refresh or select a new run to challenge the Boss Rush again.');
   }
   function title(a,b){ ctx.fillStyle='rgba(0,0,0,.62)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.textAlign='center'; ctx.fillStyle='#45e1ff'; ctx.font='900 46px Trebuchet MS'; ctx.fillText(a,canvas.width/2,canvas.height/2-16); ctx.fillStyle='#fff'; ctx.font='700 20px Trebuchet MS'; ctx.fillText(b,canvas.width/2,canvas.height/2+24); ctx.textAlign='left'; }
-  function loop(t){ const dt=Math.min(3,(t-last)/16.67||1); last=t; update(dt); draw(); requestAnimationFrame(loop); }
-  function togglePause(){ if(state==='play'){ state='pause'; pauseOverlay.classList.add('active'); assets.music.pause(); } else if(state==='pause'){ state='play'; pauseOverlay.classList.remove('active'); assets.music.play().catch(()=>{}); } }
+  function loop(t){
+    const dt=Math.min(3,(t-last)/16.67||1); last=t;
+    try { update(dt); draw(); } catch (e) {
+      console.error('Game loop error:', e);
+    }
+    requestAnimationFrame(loop);
+  }
+  function togglePause(){
+    if(state==='play'){
+      state='pause'; pauseOverlay.classList.add('active'); assets.music.pause();
+    } else if(state==='pause'){
+      state='play'; pauseOverlay.classList.remove('active');
+      assets.music.play().catch(e => {
+        if (e.name !== 'NotAllowedError') console.error('Music resume failed:', e.message);
+      });
+    }
+  }
   addEventListener('keydown',e=>{ keys[e.code]=true; if(e.code==='KeyP') togglePause(); if(e.code==='Space') e.preventDefault(); }); addEventListener('keyup',e=>keys[e.code]=false);
   document.getElementById('resumeButton').onclick=togglePause; document.getElementById('pauseTouch').onclick=togglePause;
   const shootTouch=document.getElementById('shootTouch'); ['pointerdown','pointerup','pointercancel','pointerleave'].forEach(ev=>shootTouch.addEventListener(ev,e=>{ touch.shoot=ev==='pointerdown'; shootTouch.classList.toggle('pressed',touch.shoot); e.preventDefault(); }));
